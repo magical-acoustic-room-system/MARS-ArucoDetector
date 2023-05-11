@@ -2,6 +2,7 @@ import pyrealsense2 as rs
 import numpy as np
 import cv2
 from cv2 import aruco
+from Pisition_Calculator import position
 
 
 class ArucoDetector_TwoCamera:
@@ -9,10 +10,10 @@ class ArucoDetector_TwoCamera:
     def __init__(self):
         realsense_ctx = rs.context()
         connected_devices = []
+
         for i in range(len(realsense_ctx.devices)):
             detected_camera = realsense_ctx.devices[i].get_info(rs.camera_info.serial_number)
             connected_devices.append(detected_camera)
-
 
         # Configure depth and color streams...
         # ...from Camera 1
@@ -52,6 +53,7 @@ class ArucoDetector_TwoCamera:
     
     def detect_aruco(self, color_frame, depth_frame, device_id):
         corners, ids, rejectedImgPoints = aruco.detectMarkers(color_frame, self.dictionary)
+        dis = []
 
         if ids is not None:
             distance = []
@@ -61,10 +63,12 @@ class ArucoDetector_TwoCamera:
                     cv2.circle(color_frame, point, 4, (0, 0, 255))
                     distance.append(depth_frame[int(corner[1]), int(corner[0])])
             aveDis = sum(distance)/4
+            dis.append(aveDis)
 
             # the result of the distance is in cm, and it is the average distance of four cornors
             print("Distance of the marker from Device", device_id, "is:", aveDis/10.0, "cm")
-        
+            
+        self.position = position(dis[0], dis[1])
         return        
     
     def display(self):
